@@ -7,9 +7,12 @@
     "start": "node src/server.js",
     "cli": "node src/index.js"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "axios": "^1.7.0",
-    "cheerio": "^1.0.0",
+    "cheerio": "1.0.0-rc.12",
     "p-queue": "^6.6.2"
   }
 }
