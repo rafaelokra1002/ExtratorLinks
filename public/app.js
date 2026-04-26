@@ -30,6 +30,22 @@ function definirMensagem(texto, tipo = "") {
   mensagem.className = `message ${tipo}`.trim();
 }
 
+async function lerRespostaJson(response) {
+  const texto = await response.text();
+
+  if (!texto) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(texto);
+  } catch {
+    return {
+      erro: texto,
+    };
+  }
+}
+
 function atualizarProgresso(progresso = {}, logs = []) {
   const percentual = progresso.percentual || 0;
   const numeroLote = progresso.numeroLote || 0;
@@ -187,7 +203,7 @@ async function analisar() {
       body: JSON.stringify({ texto }),
     });
 
-    const payload = await response.json();
+    const payload = await lerRespostaJson(response);
 
     if (!response.ok) {
       throw new Error(payload.erro || "Falha ao analisar os links.");
