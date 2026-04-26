@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Sistema para analisar links de grupos do WhatsApp - ATIVO ou INATIVO",
+  "main": "server.js",
   "scripts": {
     "start": "node src/server.js",
     "cli": "node src/index.js"
