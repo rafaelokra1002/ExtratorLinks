@@ -78,6 +78,7 @@ module.exports = async function handler(req, res) {
 
     const resultado = await analisarLinks(links, {
       salvarArquivos: false,
+      delayEntreLotes: 0,
     });
 
     enviarJson(res, 200, resultado);

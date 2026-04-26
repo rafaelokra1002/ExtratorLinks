@@ -16,6 +16,8 @@ const progressoPercentual = document.getElementById("progressoPercentual");
 const progressoBarra = document.getElementById("progressoBarra");
 const processoLog = document.getElementById("processoLog");
 
+const TAMANHO_LOTE_WEB = 40;
+
 let ultimoResultado = null;
 let pollingId = null;
 
@@ -67,6 +69,56 @@ function atualizarProgresso(progresso = {}, logs = []) {
     item.textContent = linha;
     processoLog.appendChild(item);
   });
+}
+
+function extrairLinksDoTexto(conteudo) {
+  if (!conteudo) {
+    return [];
+  }
+
+  const links = conteudo.match(/https?:\/\/chat\.whatsapp\.com\/[\w/-]+/gi) || [];
+  return links.map((link) => link.trim()).filter(Boolean);
+}
+
+function criarLotes(lista, tamanhoLote) {
+  const lotes = [];
+
+  for (let indice = 0; indice < lista.length; indice += tamanhoLote) {
+    lotes.push(lista.slice(indice, indice + tamanhoLote));
+  }
+
+  return lotes;
+}
+
+function criarResultadoVazio(recebidos, unicos) {
+  return {
+    ativos: [],
+    inativos: [],
+    total: unicos,
+    unicos,
+    recebidos,
+  };
+}
+
+function acumularResultado(destino, parcial) {
+  destino.ativos.push(...(parcial.ativos || []));
+  destino.inativos.push(...(parcial.inativos || []));
+  destino.total = destino.unicos;
+}
+
+function atualizarResumoParcial(resultado, processados) {
+  totalRecebidos.textContent = resultado.recebidos || 0;
+  totalUnicos.textContent = resultado.unicos || 0;
+  totalAtivos.textContent = resultado.ativos.length;
+  totalInativos.textContent = resultado.inativos.length;
+
+  return {
+    percentual: resultado.total ? Math.round((processados / resultado.total) * 100) : 0,
+    processados,
+    total: resultado.total,
+    ativos: resultado.ativos.length,
+    inativos: resultado.inativos.length,
+  };
 }
 
 function pararPolling() {
@@ -192,41 +244,67 @@ async function analisar() {
   statusBadge.textContent = "Analisando";
   statusBadge.classList.add("loading");
   statusBadge.classList.remove("done");
-  definirMensagem("Processando links. Isso pode levar alguns segundos.");
+  definirMensagem("Processando links em lotes. Isso pode levar alguns minutos.");
 
   try {
-    const response = await fetch("/api/analisar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ texto }),
-    });
+    const linksRecebidos = extrairLinksDoTexto(texto);
+    const linksUnicos = [...new Set(linksRecebidos)];
 
-    const payload = await lerRespostaJson(response);
-
-    if (!response.ok) {
-      throw new Error(payload.erro || "Falha ao analisar os links.");
+    if (!linksUnicos.length) {
+      throw new Error("Nenhum link valido do WhatsApp foi encontrado no texto enviado.");
     }
 
-    if (response.status === 202) {
+    const lotes = criarLotes(linksUnicos, TAMANHO_LOTE_WEB);
+    const resultadoFinal = criarResultadoVazio(linksRecebidos.length, linksUnicos.length);
+    const logs = [`[init] ${linksUnicos.length} link(s) unicos divididos em ${lotes.length} lote(s)`];
+    let processados = 0;
+
+    atualizarProgresso(
+      {
+        percentual: 0,
+        numeroLote: 0,
+        totalLotes: lotes.length,
+        processados: 0,
+        total: linksUnicos.length,
+      },
+      logs
+    );
+
+    for (const [indice, lote] of lotes.entries()) {
+      const response = await fetch("/api/analisar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ texto: lote.join("\n") }),
+      });
+
+      const payload = await lerRespostaJson(response);
+
+      if (!response.ok) {
+        throw new Error(payload.erro || `Falha ao analisar o lote ${indice + 1}.`);
+      }
+
+      acumularResultado(resultadoFinal, payload);
+      processados += lote.length;
+
+      const progresso = atualizarResumoParcial(resultadoFinal, processados);
+      logs.push(
+        `[batch] lote ${indice + 1}/${lotes.length} concluido - ${resultadoFinal.ativos.length} ativo(s)`
+      );
       atualizarProgresso(
         {
-          percentual: 0,
-          numeroLote: 0,
-          totalLotes: Math.max(1, Math.ceil((payload.total || 0) / 20)),
-          processados: 0,
-          total: payload.total || 0,
+          ...progresso,
+          numeroLote: indice + 1,
+          totalLotes: lotes.length,
         },
-        [`[init] job ${payload.jobId} criado`, "[init] aguardando primeiro lote..."]
+        logs.slice(-8)
       );
-      acompanharJob(payload.jobId);
-      return;
     }
 
-    renderizarResultado(payload);
+    renderizarResultado(resultadoFinal);
     definirMensagem(
-      `Analise finalizada com ${payload.ativos.length} grupo(s) ativo(s).`,
+      `Analise finalizada com ${resultadoFinal.ativos.length} grupo(s) ativo(s).`,
       "success"
     );
   } catch (erro) {
