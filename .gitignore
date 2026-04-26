@@ -1,0 +1,5 @@
+node_modules/
+
+# generated analyzer outputs
+ativos.txt
+resultado.json

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extrator de Grupos WhatsApp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <span class="topbar-mark"></span>
+          <strong>ZAPSCAN</strong>
+        </div>
+        <div class="topbar-meta">
+          <span>ACTIVE GROUP FILTER</span>
+          <span>CLIENT WEB PANEL</span>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">SYSTEM_ONLINE • V1.0.0 • READY_FOR_SCAN</span>
+          <h1 class="brand">ZAP <span>SCAN</span></h1>
+          <p class="hero-kicker">// WhatsApp • Extractor • Active Group Intel • terminal UI</p>
+          <p>
+            Plataforma visual para seu cliente colar milhares de links e receber apenas os grupos
+            realmente ativos. Mesmo motor da automacao, agora em uma interface estilo console.
+          </p>
+          <div class="actions hero-actions">
+            <button id="analisarBtn" class="primary">&gt; INICIAR SCAN</button>
+            <button id="limparBtn" class="ghost">LIMPAR LOTE</button>
+          </div>
+          <div class="hero-strip">
+            <span>PASTE LINKS</span>
+            <span>RUN FILTER</span>
+            <span>DELIVER ONLY ACTIVES</span>
+          </div>
+        </div>
+        <div class="hero-terminal">
+          <div class="terminal-bar">
+            <span></span>
+            <span></span>
+            <span></span>
+            <strong>root@zapscan:~/engine</strong>
+          </div>
+          <div class="terminal-body">
+            <p><b>$ scan</b> --source links.txt --filter active_only</p>
+            <p>[+] booting parser engine...</p>
+            <p>[+] waiting operator input...</p>
+            <p>[v] ready to classify invite pages</p>
+            <div class="terminal-preview">
+              <div class="metric">
+                <span>Status</span>
+                <strong id="statusBadge" class="badge">Aguardando</strong>
+              </div>
+              <div class="progress-shell">
+                <div class="progress-meta">
+                  <span id="progressoTexto">Nenhum processamento em andamento</span>
+                  <strong id="progressoPercentual">0%</strong>
+                </div>
+                <div class="progress-bar">
+                  <div id="progressoBarra" class="progress-fill"></div>
+                </div>
+              </div>
+              <div class="metric-grid">
+                <article>
+                  <span>Recebidos</span>
+                  <strong id="totalRecebidos">0</strong>
+                </article>
+                <article>
+                  <span>Unicos</span>
+                  <strong id="totalUnicos">0</strong>
+                </article>
+                <article>
+                  <span>Ativos</span>
+                  <strong id="totalAtivos">0</strong>
+                </article>
+                <article>
+                  <span>Inativos</span>
+                  <strong id="totalInativos">0</strong>
+                </article>
+              </div>
+              <div id="processoLog" class="process-log">
+                <p>[idle] aguardando novo lote para iniciar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="panel input-panel">
+          <div class="panel-head">
+            <h2>INPUT_STREAM</h2>
+            <label class="file-button" for="arquivoLinks">Carregar .txt</label>
+            <input id="arquivoLinks" type="file" accept=".txt" />
+          </div>
+
+          <div class="chip-row">
+            <span class="chip">cola em massa</span>
+            <span class="chip">remove duplicados</span>
+            <span class="chip">classifica convite padrao</span>
+          </div>
+
+          <div class="editor-shell">
+            <div class="editor-shell-bar">
+              <span>source_buffer.txt</span>
+              <span>UTF-8</span>
+            </div>
+
+            <textarea
+              id="textoLinks"
+              placeholder="Cole aqui os links ou uma lista completa de grupos do WhatsApp"
+            ></textarea>
+          </div>
+
+          <p id="mensagem" class="message"></p>
+        </div>
+
+        <div class="panel summary-panel">
+          <div class="panel-head">
+            <h2>ACTIVE_RESULTS</h2>
+            <div class="results-actions">
+              <button id="copiarBtn" class="ghost small">COPIAR LINKS</button>
+              <button id="baixarBtn" class="ghost small">BAIXAR JSON</button>
+            </div>
+          </div>
+
+          <div class="results-head">
+            <h3>Saida classificada</h3>
+            <span class="results-caption">somente links confirmados como ativos</span>
+          </div>
+
+          <div class="result-console-head">
+            <span>nome do grupo</span>
+            <span>link confirmado</span>
+          </div>
+
+          <div id="resultadoLista" class="result-list empty">
+            Nenhum resultado ainda.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
