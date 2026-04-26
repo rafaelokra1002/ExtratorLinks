@@ -1,26 +1,46 @@
-const { analisarLinks } = require("../src/services/analisarLinks");
-const { extrairLinksDeTexto } = require("../src/utils/arquivo");
-
 function enviarJson(res, statusCode, payload) {
-  res.status(statusCode).json(payload);
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(payload));
 }
 
-function obterTexto(req) {
-  if (!req.body) {
+function lerBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body) {
+      resolve(req.body);
+      return;
+    }
+
+    let body = "";
+
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      resolve(body);
+    });
+
+    req.on("error", reject);
+  });
+}
+
+function obterTexto(body) {
+  if (!body) {
     return "";
   }
 
-  if (typeof req.body === "string") {
+  if (typeof body === "string") {
     try {
-      const payload = JSON.parse(req.body);
+      const payload = JSON.parse(body);
       return payload.texto || "";
     } catch {
       return "";
     }
   }
 
-  if (typeof req.body === "object") {
-    return req.body.texto || "";
+  if (typeof body === "object") {
+    return body.texto || "";
   }
 
   return "";
@@ -32,7 +52,8 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    res.status(204).end();
+    res.statusCode = 204;
+    res.end();
     return;
   }
 
@@ -42,7 +63,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const texto = obterTexto(req);
+    const { analisarLinks } = require("../src/services/analisarLinks");
+    const { extrairLinksDeTexto } = require("../src/utils/arquivo");
+    const body = await lerBody(req);
+    const texto = obterTexto(body);
     const links = extrairLinksDeTexto(texto);
 
     if (links.length === 0) {
@@ -58,6 +82,10 @@ module.exports = async function handler(req, res) {
 
     enviarJson(res, 200, resultado);
   } catch (erro) {
-    enviarJson(res, 500, { erro: erro.message || "Erro interno." });
+    console.error("api/analisar error", erro);
+    enviarJson(res, 500, {
+      erro: erro.message || "Erro interno.",
+      detalhe: process.env.NODE_ENV === "development" ? erro.stack : undefined,
+    });
   }
 };
