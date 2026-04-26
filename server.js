@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const analisarHandler = require("./api/analisar");
 
 const INDEX_PATH = path.join(__dirname, "index.html");
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -18,6 +19,10 @@ function enviarArquivo(res, filePath, contentType, method) {
 }
 
 module.exports = function handler(req, res) {
+  if (req.url === "/api/analisar") {
+    return analisarHandler(req, res);
+  }
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     res.statusCode = 405;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
