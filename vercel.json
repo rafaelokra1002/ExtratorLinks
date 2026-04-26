@@ -14,14 +14,6 @@
       "dest": "/api/analisar.js"
     },
     {
-      "src": "/app.js",
-      "dest": "/public/app.js"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "/public/styles.css"
-    },
-    {
       "src": "/(.*)",
       "dest": "/server.js"
     }
